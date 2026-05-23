@@ -1,5 +1,15 @@
 import React, { createContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initialEmployees } from '../data/mockEmployees';
+
+const STORAGE_KEYS = {
+  APP_NAME: '@app_name',
+  API_KEY: '@openai_api_key',
+  BASE_URL: '@openai_base_url',
+  MODEL: '@openai_model',
+  IS_MOCK: '@is_mock_ai',
+  EMPLOYEES: '@employees',
+};
 
 export const AppContext = createContext();
 
@@ -11,6 +21,9 @@ export const AppProvider = ({ children }) => {
   const [isMockAI, setIsMockAI] = useState(true);
   const [currentProfile, setCurrentProfile] = useState('employer'); // 'employer' ou 'employee'
   
+  // Flag para evitar race condition: salvamentos só acontecem após carregar do storage
+  const [isLoaded, setIsLoaded] = useState(false);
+   
   // Lista de funcionários reativa para o protótipo
   const [employees, setEmployees] = useState(initialEmployees);
 
@@ -18,6 +31,35 @@ export const AppProvider = ({ children }) => {
   const [activeEmployeeId, setActiveEmployeeId] = useState(1); // Bruno Silva por padrão
 
   const activeEmployee = employees.find(emp => emp.id === activeEmployeeId) || employees[0];
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const savedName = await AsyncStorage.getItem(STORAGE_KEYS.APP_NAME);
+        const savedKey = await AsyncStorage.getItem(STORAGE_KEYS.API_KEY);
+        const savedUrl = await AsyncStorage.getItem(STORAGE_KEYS.BASE_URL);
+        const savedModel = await AsyncStorage.getItem(STORAGE_KEYS.MODEL);
+        const savedMock = await AsyncStorage.getItem(STORAGE_KEYS.IS_MOCK);
+
+        if (savedName) setAppName(savedName);
+        if (savedKey) setOpenaiApiKey(savedKey);
+        if (savedUrl) setOpenaiBaseUrl(savedUrl);
+        if (savedModel) setOpenaiModel(savedModel);
+        if (savedMock !== null) setIsMockAI(savedMock === 'true');
+      } catch (e) {
+        console.error('Failed to load settings:', e);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  useEffect(() => { if (isLoaded) AsyncStorage.setItem(STORAGE_KEYS.APP_NAME, appName); }, [appName, isLoaded]);
+  useEffect(() => { if (isLoaded) AsyncStorage.setItem(STORAGE_KEYS.API_KEY, openaiApiKey); }, [openaiApiKey, isLoaded]);
+  useEffect(() => { if (isLoaded) AsyncStorage.setItem(STORAGE_KEYS.BASE_URL, openaiBaseUrl); }, [openaiBaseUrl, isLoaded]);
+  useEffect(() => { if (isLoaded) AsyncStorage.setItem(STORAGE_KEYS.MODEL, openaiModel); }, [openaiModel, isLoaded]);
+  useEffect(() => { if (isLoaded) AsyncStorage.setItem(STORAGE_KEYS.IS_MOCK, String(isMockAI)); }, [isMockAI, isLoaded]);
 
   // Adicionar um novo registro de saúde para o funcionário ativo
   const addHealthRecord = (status, reportSummary, fullRelato, problemCategory) => {

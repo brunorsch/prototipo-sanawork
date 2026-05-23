@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -37,6 +37,17 @@ export const SettingsModal = ({ visible, onClose }) => {
   const [localModel, setLocalModel] = useState(openaiModel);
   const [localIsMock, setLocalIsMock] = useState(isMockAI);
   const [showSavedToast, setShowSavedToast] = useState(false);
+
+  // Sincroniza estados locais com o contexto sempre que o modal abre
+  useEffect(() => {
+    if (visible) {
+      setLocalName(appName);
+      setLocalApiKey(openaiApiKey);
+      setLocalBaseUrl(openaiBaseUrl);
+      setLocalModel(openaiModel);
+      setLocalIsMock(isMockAI);
+    }
+  }, [visible, appName, openaiApiKey, openaiBaseUrl, openaiModel, isMockAI]);
 
   const handleSave = () => {
     setAppName(localName || 'SanaWork');
