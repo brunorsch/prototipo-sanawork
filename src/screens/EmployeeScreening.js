@@ -50,6 +50,7 @@ export const EmployeeScreening = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [showForm, setShowForm] = useState(true);
 
   // Relatos pré-definidos para simular o ditado de voz facilmente nas demonstrações (realidade EPP/MPE brasileira)
   const speechMocks = [
@@ -66,6 +67,15 @@ export const EmployeeScreening = () => {
     });
     return () => keyboardShowListener.remove();
   }, []);
+
+  const resetForm = () => {
+    setQPhysical(null);
+    setQMental(null);
+    setQErgo(null);
+    setRelato('');
+    setAnalysisResult(null);
+    setShowForm(true);
+  };
 
   // Simula a escuta do microfone
   const handleMicPress = () => {
@@ -93,6 +103,7 @@ export const EmployeeScreening = () => {
 
     setIsLoading(true);
     setAnalysisResult(null);
+    setShowForm(false);
 
     try {
       // Configuração para envio da IA
@@ -198,6 +209,8 @@ export const EmployeeScreening = () => {
         </Text>
       </View>
 
+      {showForm && (
+      <>
       {/* 1. QUESTIONÁRIO RÁPIDO */}
       <View style={styles.sectionCard}>
         <View style={styles.cardHeaderRow}>
@@ -330,6 +343,8 @@ export const EmployeeScreening = () => {
           </View>
         </View>
       </View>
+      </>
+      )}
 
       {/* 3. RESULTADO DA ANÁLISE DE IA */}
       {isLoading && (
@@ -375,6 +390,14 @@ export const EmployeeScreening = () => {
 
           {/* Recomendações e Plano de Ação */}
           {renderRecommendations(analysisResult.status)}
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={resetForm}
+            style={styles.newAnalysisBtn}
+          >
+            <Text style={styles.newAnalysisBtnText}>Nova Avaliação Semanal</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -716,6 +739,19 @@ const styles = StyleSheet.create({
   actionPillText: {
     color: theme.colors.textInverse,
     fontSize: 11,
+    fontWeight: '700',
+  },
+  newAnalysisBtn: {
+    marginTop: 16,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.medium,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  newAnalysisBtnText: {
+    color: theme.colors.textInverse,
+    fontSize: 14,
     fontWeight: '700',
   },
 });
